@@ -6,6 +6,10 @@ import v2Router from "./routers/v2/index.router.ts";
 const app = express();
 const PORT = serverConfig.PORT;
 
+app.use(express.json());
+app.use(express.urlencoded({extended:true}));
+
+
 /**
  * Registering all the routes and their corresponding  routes with our app server object
  */
