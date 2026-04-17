@@ -8,7 +8,7 @@ import type{ Request, Response, NextFunction } from "express";
  * @param schema - zod schema to validate request body
  * @returns - Middleware function to validate the request body
  */
-const validateRequestBody =(schema: AnyZodObject)=>{
+export const validateRequestBody =(schema: AnyZodObject)=>{
     return async (req:Request, res:Response,next:NextFunction)=>{
         try{
             await schema.parseAsync(req.body);
@@ -25,7 +25,7 @@ const validateRequestBody =(schema: AnyZodObject)=>{
     }
 }
 
-const validateRequestQuery =(schema: AnyZodObject)=>{
+export const validateRequestQuery =(schema: AnyZodObject)=>{
     return async (req:Request, res:Response,next:NextFunction)=>{
         try{
             await schema.parseAsync(req.query);
@@ -40,7 +40,3 @@ const validateRequestQuery =(schema: AnyZodObject)=>{
     }
 }
 
-export {
-    validateRequestBody,
-    validateRequestQuery
-}
