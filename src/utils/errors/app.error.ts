@@ -1,70 +1,62 @@
-export interface AppError extends Error{
-  statusCode: number;
+/**
+ * Base application error class.
+ * Extends the native Error to preserve stack traces and instanceof checks.
+ */
+export class AppError extends Error {
+  public readonly statusCode: number;
 
-}
-
-export class InternalServerError implements AppError{
-  statusCode: number;
-  message: string;
-  name: string;
-  constructor(){
-    this.statusCode = 500;
-    this.message = "Internal Server Error";
-    this.name = "InternalServerError";
+  constructor(statusCode: number, message: string) {
+    super(message);
+    this.statusCode = statusCode;
+    this.name = this.constructor.name;
+    Error.captureStackTrace(this, this.constructor);
   }
 }
 
-export class NotFoundError implements AppError{
-  statusCode: number;
-  message: string;
-  name: string;
-  constructor(){
-    this.statusCode = 404;
-    this.message = "Not Found";
-    this.name = "NotFoundError";
+export class InternalServerError extends AppError {
+  constructor(message = 'Internal Server Error') {
+    super(500, message);
   }
 }
 
-export class BadRequestError implements AppError{
-  statusCode: number;
-  message: string;
-  name: string;
-  constructor(){
-    this.statusCode = 400;
-    this.message = "Bad Request";
-    this.name = "BadRequestError";
+export class NotFoundError extends AppError {
+  constructor(message = 'Not Found') {
+    super(404, message);
   }
 }
 
-export class UnauthorizedError implements AppError{
-  statusCode: number;
-  message: string;
-  name: string;
-  constructor(){
-    this.statusCode = 401;
-    this.message = "Unauthorized";
-    this.name = "UnauthorizedError";
+export class BadRequestError extends AppError {
+  constructor(message = 'Bad Request') {
+    super(400, message);
   }
 }
 
-export class ForbiddenError implements AppError{
-  statusCode: number;
-  message: string;
-  name: string;
-  constructor(){
-    this.statusCode = 403;
-    this.message = "Forbidden";
-    this.name = "ForbiddenError";
+export class UnauthorizedError extends AppError {
+  constructor(message = 'Unauthorized') {
+    super(401, message);
   }
 }
 
-export class ConflictError implements AppError{
-  statusCode: number;
-  message: string;
-  name: string;
-  constructor(){
-    this.statusCode = 409;
-    this.message = "Conflict";
-    this.name = "ConflictError";
+export class ForbiddenError extends AppError {
+  constructor(message = 'Forbidden') {
+    super(403, message);
+  }
+}
+
+export class ConflictError extends AppError {
+  constructor(message = 'Conflict') {
+    super(409, message);
+  }
+}
+
+export class UnprocessableEntityError extends AppError {
+  constructor(message = 'Unprocessable Entity') {
+    super(422, message);
+  }
+}
+
+export class TooManyRequestsError extends AppError {
+  constructor(message = 'Too Many Requests') {
+    super(429, message);
   }
 }

@@ -1,30 +1,58 @@
-import express from "express";
-import {serverConfig} from "./config/index.ts";
-import v1Router from "./routers/v1/index.router.ts";
-import v2Router from "./routers/v2/index.router.ts";
-import { genericErrorHandler } from "./middlewares/error.middleware.ts";
+import express from 'express';
+import { serverConfig } from './config/index.ts';
+import v1Router from './routers/v1/index.router.ts';
+import v2Router from './routers/v2/index.router.ts';
+import { genericErrorHandler } from './middlewares/error.middleware.ts';
 import logger from './config/logger.ts';
 import { attachCorrelationId } from './middlewares/correlation.middleware.ts';
+import { requestLogger } from './middlewares/request-logger.middleware.ts';
+import { securityHeaders, corsMiddleware, rateLimiter } from './middlewares/security.middleware.ts';
 
 const app = express();
 const PORT = serverConfig.PORT;
 
-app.use(attachCorrelationId)
+// ─── Global Middlewares ──────────────────────────────────────────────
+// Order matters: correlation ID → security → logging → body parsers
+
+app.use(attachCorrelationId);
+app.use(securityHeaders);
+app.use(corsMiddleware);
+app.use(rateLimiter);
+app.use(requestLogger);
 app.use(express.json());
-app.use(express.urlencoded({extended:true}));
+app.use(express.urlencoded({ extended: true }));
 
+// ─── Routes ──────────────────────────────────────────────────────────
 
-/**
- * Registering all the routes and their corresponding  routes with our app server object
- */
+app.use('/api/v1', v1Router);
+app.use('/api/v2', v2Router);
 
-app.use('/api/v1',v1Router);
-app.use('/api/v2',v2Router);
+// ─── Error Handler (must be last) ────────────────────────────────────
 
-//generic error handler
+app.use(genericErrorHandler);
 
-app.use(genericErrorHandler)
-app.listen(PORT,()=>{
-    console.log(`Server is running on http://localhost: ${PORT}`);
-    logger.info(`Server is running on http://localhost: ${PORT}`);
-})
+// ─── Start Server ────────────────────────────────────────────────────
+
+const server = app.listen(PORT, () => {
+  logger.info(`Server is running on http://localhost:${PORT}`);
+  logger.info(`Environment: ${serverConfig.NODE_ENV}`);
+});
+
+// ─── Graceful Shutdown ───────────────────────────────────────────────
+
+const gracefulShutdown = (signal: string) => {
+  logger.info(`${signal} received. Shutting down gracefully...`);
+  server.close(() => {
+    logger.info('HTTP server closed.');
+    process.exit(0);
+  });
+
+  // Force shutdown after 10 seconds if connections don't close
+  setTimeout(() => {
+    logger.error('Forced shutdown — connections did not close in time.');
+    process.exit(1);
+  }, 10_000);
+};
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
